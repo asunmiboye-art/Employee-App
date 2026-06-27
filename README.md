@@ -16,7 +16,6 @@ terraform apply -var-file=env/dev/terraform.tfvars
 
 ```bash
 terraform output s3_access_role_arn
-terraform output acm_certificate_arn
 terraform output app_bucket_name
 terraform output secrets_manager_secret_arn
 ```
@@ -27,9 +26,6 @@ Or use AWS CLI:
 # serviceAccount.roleArn
 aws iam get-role --role-name landmark-cluster-dev-app-sa --query "Role.Arn" --output text --profile terraform
 
-# ingress.certificateArn
-aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='employees.landmark.dev'].CertificateArn" --output text --profile terraform
-
 # s3.bucket
 aws s3api list-buckets --query "Buckets[?starts_with(Name,'landmark-app-bucket')].Name" --output text --profile terraform
 
@@ -39,7 +35,6 @@ aws secretsmanager list-secrets --region us-east-1 --query "SecretList[?starts_w
 
 Copy the values and update `helm/values.yaml`:
 - `s3_access_role_arn` → `serviceAccount.roleArn`
-- `acm_certificate_arn` → `ingress.certificateArn`
 - `app_bucket_name` → `s3.bucket`
 - `secrets_manager_secret_arn` → verify `externalSecrets.secretName` matches
 
@@ -67,16 +62,30 @@ aws eks update-kubeconfig --name landmark-cluster-dev --region us-east-1 --profi
 
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io
-helm install external-secrets external-secrets/external-secrets -n external-secrets --create-namespace
+helm repo update
+helm install external-secrets external-secrets/external-secrets -n external-secrets --create-namespace --wait
 ```
 
-### 6. Deploy the App
+### 6. Install AWS Load Balancer Controller
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=landmark-cluster-dev \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=$(terraform output -raw lb_controller_role_arn)
+```
+
+### 7. Deploy the App
 
 ```bash
 helm install employee-app helm/ --namespace employee-app --create-namespace
 ```
 
-### 7. Verify
+### 8. Verify
 
 ```bash
 kubectl get pods -n employee-app
