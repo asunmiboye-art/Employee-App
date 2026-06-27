@@ -1,6 +1,6 @@
 # Employee App
 
-A web application for managing employee records. The backend is a Python Flask API that stores employee data in RDS PostgreSQL and profile photos in S3. The frontend is a simple HTML/JS UI served by Nginx. The app runs on EKS with secrets pulled from AWS Secrets Manager via External Secrets Operator, and is exposed through an ALB Ingress with HTTPS.
+A web application for managing employee records. The backend is a Python Flask API that stores employee data in RDS PostgreSQL and profile photos in S3. The frontend is a simple HTML/JS UI served by Nginx. The app runs on EKS with secrets pulled from AWS Secrets Manager via External Secrets Operator, and is exposed through an ALB Ingress.
 
 ## Deployment Steps
 
@@ -92,6 +92,18 @@ kubectl get pods -n employee-app
 kubectl get ingress -n employee-app
 ```
 
+The ALB URL from the ingress ADDRESS column is your app URL.
+
+## CI/CD
+
+The GitHub Actions pipeline (`.github/workflows/deploy.yml`) automatically:
+1. Runs tests
+2. Builds and pushes images to ECR (tagged as `be-dev-YYYYMMDD-HHMMSS`)
+3. Updates `helm/values.yaml` with the new tag
+4. Deploys to EKS via `helm upgrade`
+
+Triggered on push to `main` or manually via `workflow_dispatch`.
+
 ## Run Tests
 
 ```bash
@@ -100,40 +112,63 @@ pip install -r requirements.txt
 pytest
 ```
 
-## Connect to the Database
+## Logs
 
-### From your local machine (via port-forward)
+### Container logs
 
 ```bash
-# Find the RDS endpoint
-aws rds describe-db-instances --db-instance-identifier landmark-db-dev --query "DBInstances[0].Endpoint.Address" --output text --profile terraform
+kubectl logs -n employee-app -l app=backend
+```
 
-# Port-forward through a pod in the cluster
+### CloudWatch
+
+Logs stream to `/landmark/employee-app` log group in CloudWatch.
+
+```bash
+aws logs tail /landmark/employee-app --follow --profile terraform
+```
+
+## Connect to the Database
+
+### From a pod in the cluster
+
+```bash
+# Spin up a postgres client pod
 kubectl run pg-client --rm -it --image=postgres:15 --namespace=employee-app -- bash
 
-# Inside the pod, connect to RDS
+# Connect to RDS
 psql -h <RDS_ENDPOINT> -U landmark_admin -d employees
 ```
 
-### From any pod in the cluster
+### Get the RDS endpoint
 
 ```bash
-# Get the DATABASE_URL from the secret
-kubectl get secret db-credentials -n employee-app -o jsonpath='{.data.DATABASE_URL}' | base64 -d
+aws rds describe-db-instances --db-instance-identifier landmark-db-dev --query "DBInstances[0].Endpoint.Address" --output text --profile terraform
+```
 
-# Or connect directly
-kubectl exec -it deploy/backend -n employee-app -- python -c "from app import db; print(db.engine.url)"
+### Get DATABASE_URL from the secret
+
+```bash
+kubectl get secret db-credentials -n employee-app -o jsonpath='{.data.DATABASE_URL}' | base64 -d
 ```
 
 ### Useful psql commands
 
 ```sql
--- List all employees
 SELECT * FROM employees;
-
--- Count by department
 SELECT department, COUNT(*) FROM employees GROUP BY department;
-
--- Check latest entries
 SELECT * FROM employees ORDER BY id DESC LIMIT 5;
+```
+
+## S3 Photos
+
+```bash
+aws s3 ls s3://landmark-app-bucket-dev/photos/ --profile terraform
+```
+
+## Destroy
+
+```bash
+helm uninstall employee-app -n employee-app
+cd terraform && terraform destroy -var-file=env/dev/terraform.tfvars
 ```
