@@ -1,6 +1,6 @@
 # VPC Module
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "5.16.0"
 
   name = "landmark-vpc-${var.environment}"
@@ -17,13 +17,13 @@ module "vpc" {
 
   # Tags required for EKS and Load Balancer Controller
   public_subnet_tags = {
-    "kubernetes.io/role/elb"                            = "1"
-    "kubernetes.io/cluster/${var.cluster_name}"         = "shared"
+    "kubernetes.io/role/elb"                    = "1"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb"                   = "1"
-    "kubernetes.io/cluster/${var.cluster_name}"         = "shared"
+    "kubernetes.io/role/internal-elb"           = "1"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 
   tags = {
@@ -43,10 +43,10 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   # Enable both ConfigMap and API authentication
-  authentication_mode                         = "API_AND_CONFIG_MAP"
-  cluster_endpoint_public_access              = true
-  cluster_endpoint_private_access             = true
-  enable_cluster_creator_admin_permissions    = true
+  authentication_mode                      = "API_AND_CONFIG_MAP"
+  cluster_endpoint_public_access           = true
+  cluster_endpoint_private_access          = true
+  enable_cluster_creator_admin_permissions = true
 
   # CloudWatch logging for all control plane components
   cluster_enabled_log_types = [
@@ -67,7 +67,7 @@ module "eks" {
   # Managed Node Group with ASG
   eks_managed_node_groups = {
     main = {
-      name           = "${var.cluster_name}-${var.environment}-nodes"
+      name           = "${var.cluster_name}-${var.environment}"
       instance_types = var.node_instance_types
       desired_size   = var.node_desired_size
       min_size       = var.node_min_size
