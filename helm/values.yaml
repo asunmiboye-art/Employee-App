@@ -15,7 +15,7 @@ frontend:
 # Service Account for S3 + Secrets Manager access
 serviceAccount:
   name: app-sa
-  roleArn: ""
+  roleArn: "arn:aws:iam::075120018043:role/landmark-cluster-dev-app-sa"
 
 # External Secrets - AWS Secrets Manager
 externalSecrets:
