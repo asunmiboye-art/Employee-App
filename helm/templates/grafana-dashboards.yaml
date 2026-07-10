@@ -2,12 +2,52 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboards
+  name: grafana-custom-dashboards
   labels:
     grafana_dashboard: "1"
 data:
-  platform.json: |
-    {"dashboard":{"title":"Platform Metrics","uid":"platform-metrics","panels":[{"title":"Node CPU Usage","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":0},"targets":[{"expr":"100 - (avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)","legendFormat":"{{ "{{instance}}" }}"}]},{"title":"Node Memory Usage","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":0},"targets":[{"expr":"(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100","legendFormat":"{{ "{{instance}}" }}"}]},{"title":"Pod Count by Namespace","type":"stat","gridPos":{"h":6,"w":12,"x":0,"y":8},"targets":[{"expr":"count(kube_pod_info) by (namespace)","legendFormat":"{{ "{{namespace}}" }}"}]},{"title":"Pod Restarts","type":"timeseries","gridPos":{"h":6,"w":12,"x":12,"y":8},"targets":[{"expr":"sum(kube_pod_container_status_restarts_total) by (namespace, pod)","legendFormat":"{{ "{{namespace}}" }}/{{ "{{pod}}" }}"}]},{"title":"CPU by Pod (employee-app)","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":14},"targets":[{"expr":"sum(rate(container_cpu_usage_seconds_total{namespace=\"employee-app\"}[5m])) by (pod)","legendFormat":"{{ "{{pod}}" }}"}]},{"title":"Memory by Pod (employee-app)","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":14},"targets":[{"expr":"sum(container_memory_working_set_bytes{namespace=\"employee-app\"}) by (pod) / 1024 / 1024","legendFormat":"{{ "{{pod}}" }} (MB)"}]},{"title":"Deployment Replicas","type":"table","gridPos":{"h":6,"w":24,"x":0,"y":22},"targets":[{"expr":"kube_deployment_status_replicas{namespace=\"employee-app\"}","format":"table","instant":true}]}],"schemaVersion":38,"time":{"from":"now-1h","to":"now"},"refresh":"30s"}}
-  application.json: |
-    {"dashboard":{"title":"Application Metrics - Employee App","uid":"app-metrics","panels":[{"title":"HTTP Request Rate","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":0},"targets":[{"expr":"sum(rate(flask_http_request_total{namespace=\"employee-app\"}[5m])) by (method, endpoint)","legendFormat":"{{ "{{method}}" }} {{ "{{endpoint}}" }}"}]},{"title":"HTTP Error Rate (5xx)","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":0},"targets":[{"expr":"sum(rate(flask_http_request_total{namespace=\"employee-app\", status=~\"5..\"}[5m])) by (endpoint)","legendFormat":"{{ "{{endpoint}}" }}"}]},{"title":"Request Duration (p95)","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":8},"targets":[{"expr":"histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket{namespace=\"employee-app\"}[5m])) by (le, endpoint))","legendFormat":"{{ "{{endpoint}}" }}"}]},{"title":"Active Connections","type":"stat","gridPos":{"h":8,"w":12,"x":12,"y":8},"targets":[{"expr":"sum(nginx_connections_active{namespace=\"employee-app\"})","legendFormat":"Active"}]},{"title":"CPU Throttling","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":16},"targets":[{"expr":"sum(rate(container_cpu_cfs_throttled_seconds_total{namespace=\"employee-app\"}[5m])) by (pod)","legendFormat":"{{ "{{pod}}" }}"}]},{"title":"Network I/O","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":16},"targets":[{"expr":"sum(rate(container_network_receive_bytes_total{namespace=\"employee-app\"}[5m])) by (pod) / 1024","legendFormat":"RX {{ "{{pod}}" }} (KB/s)"},{"expr":"sum(rate(container_network_transmit_bytes_total{namespace=\"employee-app\"}[5m])) by (pod) / 1024","legendFormat":"TX {{ "{{pod}}" }} (KB/s)"}]}],"schemaVersion":38,"time":{"from":"now-1h","to":"now"},"refresh":"30s"}}
+  platform.json: |-
+    {
+      "title": "Platform Metrics",
+      "uid": "platform-metrics",
+      "panels": [
+        {"title":"Node CPU Usage","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":0},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"100 - (avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)","legendFormat":"{{instance}}"}]},
+        {"title":"Node Memory Usage","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":0},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100","legendFormat":"{{instance}}"}]},
+        {"title":"Pod Count by Namespace","type":"stat","gridPos":{"h":6,"w":12,"x":0,"y":8},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"count(kube_pod_info) by (namespace)","legendFormat":"{{namespace}}"}]},
+        {"title":"Pod Restarts","type":"timeseries","gridPos":{"h":6,"w":12,"x":12,"y":8},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(kube_pod_container_status_restarts_total) by (namespace, pod)","legendFormat":"{{namespace}}/{{pod}}"}]},
+        {"title":"CPU by Pod (employee-app)","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":14},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(rate(container_cpu_usage_seconds_total{namespace=\"employee-app\"}[5m])) by (pod)","legendFormat":"{{pod}}"}]},
+        {"title":"Memory by Pod (employee-app)","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":14},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(container_memory_working_set_bytes{namespace=\"employee-app\"}) by (pod) / 1024 / 1024","legendFormat":"{{pod}} (MB)"}]},
+        {"title":"Deployment Replicas","type":"table","gridPos":{"h":6,"w":24,"x":0,"y":22},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"kube_deployment_status_replicas{namespace=\"employee-app\"}","format":"table","instant":true}]}
+      ],
+      "schemaVersion": 38,
+      "time": {"from": "now-1h", "to": "now"},
+      "refresh": "30s"
+    }
+  application.json: |-
+    {
+      "title": "Application Metrics - Employee App",
+      "uid": "app-metrics",
+      "panels": [
+        {"title":"HTTP Request Rate","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":0},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(rate(flask_http_request_total{namespace=\"employee-app\"}[5m])) by (method, endpoint)","legendFormat":"{{method}} {{endpoint}}"}]},
+        {"title":"HTTP Error Rate (5xx)","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":0},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(rate(flask_http_request_total{namespace=\"employee-app\", status=~\"5..\"}[5m])) by (endpoint)","legendFormat":"{{endpoint}}"}]},
+        {"title":"Request Duration (p95)","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":8},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"histogram_quantile(0.95, sum(rate(flask_http_request_duration_seconds_bucket{namespace=\"employee-app\"}[5m])) by (le, endpoint))","legendFormat":"{{endpoint}}"}]},
+        {"title":"Active Connections","type":"stat","gridPos":{"h":8,"w":12,"x":12,"y":8},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(nginx_connections_active{namespace=\"employee-app\"})","legendFormat":"Active"}]},
+        {"title":"CPU Throttling","type":"timeseries","gridPos":{"h":8,"w":12,"x":0,"y":16},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(rate(container_cpu_cfs_throttled_seconds_total{namespace=\"employee-app\"}[5m])) by (pod)","legendFormat":"{{pod}}"}]},
+        {"title":"Network I/O","type":"timeseries","gridPos":{"h":8,"w":12,"x":12,"y":16},"datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"expr":"sum(rate(container_network_receive_bytes_total{namespace=\"employee-app\"}[5m])) by (pod) / 1024","legendFormat":"RX {{pod}} (KB/s)"},{"expr":"sum(rate(container_network_transmit_bytes_total{namespace=\"employee-app\"}[5m])) by (pod) / 1024","legendFormat":"TX {{pod}} (KB/s)"}]}
+      ],
+      "schemaVersion": 38,
+      "time": {"from": "now-1h", "to": "now"},
+      "refresh": "30s"
+    }
+  cloudwatch-logs.json: |-
+    {
+      "title": "Application Logs - CloudWatch",
+      "uid": "cloudwatch-logs",
+      "panels": [
+        {"title":"Application Logs","type":"logs","gridPos":{"h":20,"w":24,"x":0,"y":0},"datasource":{"type":"cloudwatch","uid":"cloudwatch"},"targets":[{"queryMode":"Logs","logGroups":[{"arn":"","name":"/landmark/employee-app"}],"expression":"fields @timestamp, @message | sort @timestamp desc | limit 100"}]}
+      ],
+      "schemaVersion": 38,
+      "time": {"from": "now-1h", "to": "now"},
+      "refresh": "30s"
+    }
 {{- end }}

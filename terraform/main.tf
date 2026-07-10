@@ -186,7 +186,7 @@ module "app_irsa" {
   oidc_providers = {
     main = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["employee-app:app-sa"]
+      namespace_service_accounts = ["employee-app:app-sa", "employee-app:employee-app-grafana"]
     }
   }
 
