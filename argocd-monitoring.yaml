@@ -44,8 +44,7 @@ spec:
           prometheusSpec:
             serviceMonitorSelectorNilUsesHelmValues: false
             podMonitorSelectorNilUsesHelmValues: false
-            serviceMonitorNamespaceSelector:
-              any: true
+            serviceMonitorNamespaceSelector: {}
             retention: 7d
             storageSpec:
               volumeClaimTemplate:
