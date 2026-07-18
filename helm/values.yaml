@@ -37,54 +37,6 @@ logging:
   logGroup: "/landmark/employee-app"
   environment: "dev"
 
-# Monitoring - kube-prometheus-stack
+# Monitoring
 monitoring:
   enabled: true
-
-kube-prometheus-stack:
-  alertmanager:
-    enabled: false
-  grafana:
-    adminPassword: admin123
-    service:
-      type: LoadBalancer
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
-        service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
-    sidecar:
-      dashboards:
-        enabled: true
-        label: grafana_dashboard
-        labelValue: "1"
-        searchNamespace: ALL
-    additionalDataSources:
-      - name: CloudWatch
-        type: cloudwatch
-        uid: cloudwatch
-        access: proxy
-        jsonData:
-          authType: default
-          defaultRegion: us-east-1
-          logGroups:
-            - arn: ""
-              name: /landmark/employee-app
-    serviceAccount:
-      annotations:
-        eks.amazonaws.com/role-arn: "arn:aws:iam::075120018043:role/landmark-cluster-dev-app-sa"
-  prometheus:
-    prometheusSpec:
-      serviceMonitorSelectorNilUsesHelmValues: false
-      podMonitorSelectorNilUsesHelmValues: false
-      retention: 7d
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: gp2
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 10Gi
-  nodeExporter:
-    enabled: true
-  kubeStateMetrics:
-    enabled: true

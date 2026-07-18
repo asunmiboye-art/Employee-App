@@ -3,9 +3,3 @@ name: employee-app
 description: Employee Directory application with Flask backend and Nginx frontend
 version: 1.0.0
 appVersion: "1.0.0"
-
-dependencies:
-  - name: kube-prometheus-stack
-    version: "72.6.2"
-    repository: https://prometheus-community.github.io/helm-charts
-    condition: monitoring.enabled
